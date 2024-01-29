@@ -1,72 +1,51 @@
 const axios = require("axios");
-const fs = require("fs");
 const request = require("request");
+const fs = require("fs");
 
 module.exports = {
   config: {
     name: "shoti",
+    aliases: [],
     version: "1.0",
-    author: "Ronald Allen Albania",
+    author: "kshitiz",
     countDown: 20,
-    category: "chatbox",
+    role: 0,
+    shortDescription: "shoti",
+    longDescription: "shoti",
+    category: "fun",
+    guide: "{pn} shoti",
   },
-
-  langs: {
-    vi: {},
-    en: {},
-  },
-
-  onStart: async function ({ api, event }) {
-    api.sendMessage("wait lang bro", event.threadID);
-
+  onStart: async function ({ api, event, message }) {
     try {
-      let response = await axios.post(
-        "https://api--v1-shoti.vercel.app/api/v1/get",
-        {
-          apikey: "shoti-1ha4h3do8at9a7ponr",
-        },
-      );
 
-      if (
-        response.data.code === 200 &&
-        response.data.data &&
-        response.data.data.url
-      ) {
-        const videoUrl = response.data.data.url;
-        const filePath = __dirname + "/cache/shoti.mp4";
-        const file = fs.createWriteStream(filePath);
-        const rqs = request(encodeURI(videoUrl));
+      message.reply("gage wait");
 
-        rqs.pipe(file);
+      const response = await axios.post("https://your-shoti-api.vercel.app/api/v1/get", {
+        apikey: "$shoti-1hjuumg7jv44ghmsif",
+      });
 
-        file.on("finish", async () => {
-          const userInfo = response.data.data.user;
-          const username = userInfo.username;
-          const nickname = userInfo.nickname;
+      const file = fs.createWriteStream(__dirname + "/cache/shoti.mp4");
 
-          await api.sendMessage(
-            {
-              attachment: fs.createReadStream(filePath),
-            },
-            event.threadID,
-          );
-          api.sendMessage(
-            `Username: @${username}\nNickname: ${nickname}`,
-            event.threadID,
-          );
-        });
-      } else {
-        api.sendMessage(
-          "No video URL found in the API response.",
+      const rqs = request(encodeURI(response.data.data.url));
+      rqs.pipe(file);
+
+      file.on("finish", async () => {
+
+        await api.sendMessage(
+          {
+            body: `@${response.data.data.user.username}\nhi reben👉👌`,
+            attachment: fs.createReadStream(__dirname + "/cache/shoti.mp4"),
+          },
           event.threadID,
+          event.messageID
         );
-      }
+      });
+
+      file.on("error", (err) => {
+        api.sendMessage(`Shoti Error: ${err}`, event.threadID, event.messageID);
+      });
     } catch (error) {
-      console.error(error);
-      api.sendMessage(
-        "wait lang bro",
-        event.threadID,
-      );
+      api.sendMessage("An error occurred while generating video:" + error, event.threadID, event.messageID);
     }
   },
 };

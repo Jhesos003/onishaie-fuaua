@@ -1,72 +1,107 @@
-const axios = require('axios');
-const fs = require('fs'); 
-
-const Prefixes = [
-  'ai'
+const { getPrefix, getStreamFromURL, uploadImgbb } = global.utils;
+async function ai({ message: m, event: e, args: a, usersData: u, commandName }) {
+  var p = [`${await getPrefix(e.threadID)}${this.config.name}`, 
+`${this.config.name}`
+ /*,"ai"
+add more usage here
+*/
 ];
-
-let promptData = []; 
-
+if (p.some(b => a[0].toLowerCase().startsWith(b))) {
+    try {
+      let prompt = "";
+ if (e.type === "message_reply" && e.messageReply.attachments && e.messageReply.attachments[0]?.type === "photo") {
+        const b = await uploadImgbb(e.messageReply.attachments[0].url);
+  prompt = a.slice(1).join(" ") + ' ' + b.image.url;
+   } else {
+  prompt = a.slice(1).join(" ");
+  }
+var __ = [{ id: e.senderID,tag: await u.getName(e.senderID) }];
+  const r = await require("axios").post("https://test-ai-ihc6.onrender.com/api", {
+  prompt: prompt,
+  apikey: "GayKey-oWHmMb1t8ASljhpgSSUI",
+  name: __[0]['tag'],
+  id: __[0]['id'],
+  });
+var _ = r.data.result.replace(/{name}/g, __[0]['tag']).replace(/{pn}/g, p[0]);
+  if (r.data.av) {
+  if (Array.isArray(r.data.av)) {
+ const avs = r.data.av.map(url => getStreamFromURL(url));
+ const avss = await Promise.all(avs);
+    m.reply({
+   body: _,
+  mentions: __,
+ attachment: avss
+    });
+  } else {
+  m.reply({
+ body: _,
+ mentions: __,
+ attachment: await getStreamFromURL(r.data.av)
+     });
+     }
+    } else {
+    m.reply({
+   body: _,
+    mentions: __
+     }, (err, info) => {
+global.GoatBot.onReply.set(info.messageID, { commandName, messageID: info.messageID, author: e.senderID });
+   });
+  }
+  } catch (error) {
+ m.reply("Error " + error);
+  }
+ }
+}
+async function n_gg_({ message: m, event: e, args: a, usersData: u, commandName, Reply }) {
+const { author } = Reply;
+if (author !==e.senderID)
+return;
+    var __ = [{ id: e.senderID,tag: await u.getName(e.senderID) }];
+   const r = await require("axios").post("https://test-ai-ihc6.onrender.com/api", {
+   prompt: a.join(" "),
+  apikey: "GayKey-oWHmMb1t8ASljhpgSSUI",
+  name: __[0]['tag'],
+   id: __[0]['id'],
+   });
+ var _ = r.data.result.replace(/{name}/g, __[0]['tag']);
+/*eto pag yung response ng api na madami link sa array*/
+    if (r.data.av) {
+        if (Array.isArray(r.data.av)) {
+          const avs = r.data.av.map(url => getStreamFromURL(url));
+  const avss = await Promise.all(avs);
+  m.reply({
+  body: _,
+   mentions: __,
+    attachment: avss
+     });
+    } else {
+   m.reply({
+   body: _,
+  mentions: __,
+ attachment: await getStreamFromURL(r.data.av)
+  });
+   }
+   } else {
+  m.reply({
+   body: _,
+ mentions: __
+   }, (err, info) => {
+global.GoatBot.onReply.set(info.messageID, { commandName, messageID: info.messageID, author: e.senderID });
+        });
+      }
+}
 module.exports = {
   config: {
-    name: 'ai',
-    aliases : ['ai'],
-    version: '2.5',
-    author: 'Aryan', 
+    name: "ai",
+    aliases: [ai],
+    version: 1.6,
+    author: "Jhe",
     role: 0,
-    countDown: 0,
-    category: 'Orochi Ai',
-    shortDescription: {
-      en: 'Asks an AI for an answer.',
-    },
-    longDescription: {
-      en: 'Asks an AI for an answer based on the user prompt.',
-    },
-    guide: {
-      en: '{pn} [prompt]',
-    },
+    shortDescription: "AI that can do various tasks",
+    guide: "{pn} <query>",
+    category: "AI"
   },
-  onStart: async function () {},
-  onChat: async function ({ api, event, args, message }) {
-    try {
-      const prefix = Prefixes.find((p) => event.body && event.body.toLowerCase().startsWith(p));
-
-      if (!prefix) {
-        return; 
-      }
-
-      const prompt = `yo! ask me questions and I'll try answer it to the best of my abilities. ${event.body.substring(prefix.length).trim()}`;
-
-      if (prompt === 'ai') {
-        await message.reply(
-          "Hello, how can I assist you today?"
-        );
-        return;
-      }
-
-      
-      promptData.push({ prompt, uid: event.senderID }); 
-
-      const response = await axios.get(`https://chatgayfeyti.archashura.repl.co?gpt=${encodeURIComponent(prompt)}`);
-
-      if (response.status !== 200 || !response.data) {
-        throw new Error('Invalid or missing response from API');
-      }
-
-      const messageText = response.data.content.trim();
-
-      await message.reply(`${messageText}`);
-
-      console.log('Sent answer as a reply to user');
-
-      fs.writeFileSync('prompt.json', JSON.stringify(promptData, null, 2), 'utf8');
-    } catch (error) {
-      console.error(`Failed to get an answer: ${error.message}`);
-      api.sendMessage(
-        `${error.message}`,
-        event.threadID
-      );
-    }
-  },
+  onStart: function() {},
+  onChat: ai,
+onReply: n_gg_
 };
-      

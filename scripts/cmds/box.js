@@ -1,13 +1,13 @@
 module.exports = {
   config: {
-    name: "ai",
-    aliases: ["blackbox"],
+    name: "ask",
+    aliases: ["ask"],
     version: "1.0",
     author: "Samir Œ",
     countDown: 5,
     role: 0,
-    shortDescription: "ai",
-    longDescription: "black box",
+    shortDescription: "ask",
+    longDescription: "ask",
     category: "new ai",
     guide:  {
       vi: "{pn} text ",

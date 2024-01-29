@@ -1,55 +1,57 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-const request = require("request");
-const path = require("path");
+const axios = require('axios');
+const fs = require('fs-extra');
 
 module.exports = {
   config: {
-    name: "pinterest", 
-    aliases: ["pinterest"], 
-    version: "1.0.2", 
-    author: "KSHITIZ", 
-    role: 0,
+    name: 'Pinterest',
+    aliases: ["pint", "pinter"],
+    version: '1.2',
+    author: 'Jhe',//api by hazey
     countDown: 5,
-    shortDescription:{
-      en: "Search for images on Pinterest"}, 
-    longDescription:{
-      en:""}, 
-    category: "image", 
+    role: 0,
+    category: 'Image Search',
+    shortDescription: {
+      en: "Search for images on \n| Pinterest based on a keyword",
+    },
+    longDescription: {
+      en: "This command searches for images on Pinterest based on a provided keyword.",
+    },
     guide: {
-      en: "{prefix}pinterest <search query> -<number of images>"
-    }
-  }, 
+      en: "{pn} 'keyword' -'number of search results'\nExample: {pn} cute -10\nIf no number is provided, the command will return the first 5 images.",
+    },
+  },
 
-  onStart: async function({ api, event, args }) {
+  onStart: async function ({ api, args, event, message }) {
+    const search = args[0];
+    let count = args[1] || 5;
+
     try {
-      const keySearch = args.join(" ");
-      if (!keySearch.includes("-")) {
-        return api.sendMessage(`Please enter the search query and number of images to return in the format: ${config.guide.en}`, event.threadID, event.messageID);
+      const response = await axios.get(`https://code-merge-api-hazeyy01.replit.app/pinterest/api?search=${search}`);
+      const data = response.data;
+
+      if (data.error) {
+        return api.sendMessage(data.error, event.threadID);
+      } else {
+        let attachment = [];
+        let storedPath = [];
+
+        for (let i = 0; i < data.count && i < count; i++) {
+          let path = __dirname + `/cache/pinterest_${i + 1}.jpg`;
+          let pic = await axios.get(data.data[i], { responseType: "arraybuffer" });
+          fs.writeFileSync(path, pic.data);
+          storedPath.push(path);
+          attachment.push(fs.createReadStream(path));
+        }
+
+        api.sendMessage({ body: `🤖 Pinterest Search - ${search}\n\n» Results: ${attachment.length} - ${data.count} «`, attachment: attachment }, event.threadID, () => {
+          for (const item of storedPath) {
+            fs.unlinkSync(item);
+          }
+        }, event.messageID);
       }
-      const keySearchs = keySearch.substr(0, keySearch.indexOf('-')).trim();
-      const numberSearch = parseInt(keySearch.split("-").pop().trim()) || 6;
-
-      const res = await axios.get(`https://api-dien.kira1011.repl.co/pinterest?search=${encodeURIComponent(keySearchs)}`);
-      const data = res.data.data;
-      const imgData = [];
-
-      for (let i = 0; i < Math.min(numberSearch, data.length); i++) {
-        const imgResponse = await axios.get(data[i], { responseType: 'arraybuffer' });
-        const imgPath = path.join(__dirname, 'cache', `${i + 1}.jpg`);
-        await fs.outputFile(imgPath, imgResponse.data);
-        imgData.push(fs.createReadStream(imgPath));
-      }
-
-      await api.sendMessage({
-        attachment: imgData,
-        body: `Here are the top ${imgData.length} image results for "${keySearchs}":`
-      }, event.threadID, event.messageID);
-
-      await fs.remove(path.join(__dirname, 'cache'));
     } catch (error) {
       console.error(error);
-      return api.sendMessage(`📷| Please follow this format: \nex: -pinterest cat-10`, event.threadID, event.messageID);
+      return api.sendMessage("🚫 An error occurred while fetching data from Pinterest API.", event.threadID);
     }
-  }
+  },
 };

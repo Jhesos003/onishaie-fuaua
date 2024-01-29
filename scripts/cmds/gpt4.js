@@ -1,106 +1,46 @@
-const axios = require("axios");
+const axios = require('axios');
 
 module.exports = {
   config: {
     name: "gpt4",
-    version: "1.0",
-    author: "SiAM",
-    countDown: 15,
+    author: "Jhe",
+    version: "1.5",
+    countDown: 5,
     role: 0,
+    category: "GPT4",
     shortDescription: {
-      vi: "",
-      en: ""
-    },
-    longDescription: {
-      vi: "",
-      en: "chatGPT with GPT 4 like model ( this is not the original gpt4 but its inspired from gpt4 model structure.."
-    },
-    category: "ai",
-    guide: {
-      en: "{pn} 'query'\nexample:\n{pn} hi there"
+      en: "gpt4 Architecture "
     }
   },
-  onStart: async function ({ api, message, event, args, commandName }) {
-    const userID = event.senderID;
-    const query = encodeURIComponent(args.join(" ")); 
 
-
-    if (!query) {
-      message.reply("Please provide a query. \n\nExample: /gpt How does photosynthesis work?");
-      return;
-    }
-
+  onStart: async function ({ api, event, args }) {
     try {
-      const response = await axios.get(`https://gpt4.siam-apiproject.repl.co/api?uid=${userID}&query=${query}`);
+      const { messageID, messageReply } = event;
+      let prompt = args.join(' ');
 
-      const answer = response.data.lastAnswer; 
+      if (messageReply) {
+        const repliedMessage = messageReply.body;
+        prompt = `${repliedMessage} ${prompt}`;
+      }
 
-      if (answer) {
-        message.reply(
-          {
-            body: answer,
-            attachment: ''
-          },
-          (err, info) => {
-            global.GoatBot.onReply.set(info.messageID, {
-              commandName,
-              messageID: info.messageID,
-              author: event.senderID
-            });
-          }
-        );
+      if (!prompt) {
+        return api.sendMessage('Please provide a prompt to generate a text response.GPT4 {questions}\nExample: GPT4 What is the meaning of life?\n', event.threadID, messageID);
+      }
+
+      const gpt4_api = `https://ai-chat-gpt-4-lite.onrender.com/api/hercai?question=${encodeURIComponent(prompt)}`;
+
+      const response = await axios.get(gpt4_api);
+
+      if (response.data && response.data.reply) {
+        const generatedText = response.data.reply;
+        api.sendMessage({ body: generatedText, attachment: null }, event.threadID, messageID);
       } else {
-        console.error("Invalid API Response:", response.data);
-        sendErrorMessage(message, "Server response is invalid ❌");
+        console.error('API response did not contain expected data:', response.data);
+        api.sendMessage(`❌ An error occurred while generating the text response. Please try again later. Response data: ${JSON.stringify(response.data)}`, event.threadID, messageID);
       }
     } catch (error) {
-      console.error("Request Error:", error);
-      sendErrorMessage(message, "Server not responding ❌");
-    }
-  },
-  onReply: async function ({ message, event, Reply, args }) {
-    let { author, commandName } = Reply;
-    if (event.senderID !== author) return;
-    const userID = author;
-    const query = encodeURIComponent(args.join(" ")); 
-
-    if (query.toLowerCase() === "clear") {
-      global.GoatBot.onReply.delete(message.messageID);
-      message.reply("Previous conversation has been cleared.");
-      return;
-    }
-
-    try {
-      const response = await axios.get(`https://gpt4.siam-apiproject.repl.co/api?uid=${userID}&query=${query}`);
-
-      const answer = response.data.lastAnswer; 
-
-      if (answer) {
-        message.reply(
-          {
-            body: answer,
-            attachment: ''
-          },
-          (err, info) => {
-            global.GoatBot.onReply.set(info.messageID, {
-              commandName,
-              messageID: info.messageID,
-              author: event.senderID
-            });
-          }
-        );
-      } else {
-        console.error("Invalid API Response:", response.data);
-        sendErrorMessage(message, "Server response is invalid ❌");
-      }
-    } catch (error) {
-      console.error("Request Error:", error);
-      sendErrorMessage(message, "Server not responding ❌");
+      console.error('Error:', error);
+      api.sendMessage(`❌ An error occurred while generating the text response. Please try again later. Error details: ${error.message}`, event.threadID, event.messageID);
     }
   }
 };
-
-function sendErrorMessage(message, errorMessage) {
-  message.reply({ body: errorMessage });
-                    }
-      

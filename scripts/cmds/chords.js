@@ -5,7 +5,7 @@ module.exports = {
     name: "chords",
     aliases: [],
     version: "1.0",
-    author: "Joshua Sy & kshitiz",
+    author: "Jhe",
     shortDescription: "Search Chords",
     longDescription: "Search Chords",
     category: "music",

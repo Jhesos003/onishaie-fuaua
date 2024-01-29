@@ -13,11 +13,13 @@
   "language": "en",
   "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
   "adminOnly": {
-    "enable": true,
+    "enable": false,
     "ignoreCommand": []
   },
   "adminBot": [
-    "100082205296067"
+    "100082205296067",
+    "100055539625814",
+    "100038651086493"
   ],
   "whiteListMode": {
     "enable": false,

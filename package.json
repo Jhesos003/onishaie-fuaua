@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.13.2",
+    "@neoxr/ytdl-core": "^4.11.5",
     "@xaviabot/fb-downloader": "^1.0.14",
     "axios": "^1.4.0",
     "bcrypt": "^5.0.1",

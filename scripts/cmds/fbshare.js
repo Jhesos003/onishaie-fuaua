@@ -5,7 +5,7 @@ config: {
   name: 'fbshare',
   aliases: ['facebookshare'],
   version: '1.0',
-  author: 'zed',
+  author: 'jesos',
   countDown: 5,
   role: 2,
   shortDescription: '',
